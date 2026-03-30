@@ -5,7 +5,7 @@ import { request as httpsRequest, get as httpsGet } from 'https';
 import { homedir } from 'os';
 import { join, resolve, dirname } from 'path';
 
-const VERSION = '0.2.0';
+const VERSION = '0.2.1';
 const RELEASES_API = 'https://api.github.com/repos/dkarski/openai-image-skill/releases/latest';
 const REPO_RAW = 'https://raw.githubusercontent.com/dkarski/openai-image-skill/main';
 
@@ -221,16 +221,18 @@ async function cmdGenerate(prompt, opts, config) {
 
   console.log(`Generating with ${model} (${size})…`);
 
-  const result = await apiRequest('POST', '/v1/images/generations', {
-    model,
-    prompt,
-    n: 1,
-    size,
-    response_format: 'url',
-  });
+  const isGptImage = model.startsWith('gpt-image');
+  const body = { model, prompt, n: 1, size };
+  if (!isGptImage) body.response_format = 'url';
 
-  const imageUrl = result.data[0].url;
-  const buffer = await downloadToBuffer(imageUrl);
+  const result = await apiRequest('POST', '/v1/images/generations', body);
+
+  let buffer;
+  if (result.data[0].b64_json) {
+    buffer = Buffer.from(result.data[0].b64_json, 'base64');
+  } else {
+    buffer = await downloadToBuffer(result.data[0].url);
+  }
 
   mkdirSync(dirname(outputPath), { recursive: true });
   writeFileSync(outputPath, buffer);
