@@ -40,6 +40,10 @@ export OPENAI_API_KEY=sk-...
 # Add to ~/.zshrc to persist
 ```
 
+> **Getting an API key:** Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys) → Create new secret key.
+> Image generation is a paid feature — charges apply per image based on model and size.
+> See [OpenAI pricing](https://openai.com/api/pricing/) for current rates.
+
 ## Usage
 
 Just talk to Claude naturally — the skill triggers automatically:
