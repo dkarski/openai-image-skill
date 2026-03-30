@@ -1,9 +1,13 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, renameSync, chmodSync } from 'fs';
 import { createInterface } from 'readline';
 import { request as httpsRequest, get as httpsGet } from 'https';
 import { homedir } from 'os';
 import { join, resolve, dirname } from 'path';
+
+const VERSION = '0.2.0';
+const RELEASES_API = 'https://api.github.com/repos/dkarski/openai-image-skill/releases/latest';
+const REPO_RAW = 'https://raw.githubusercontent.com/dkarski/openai-image-skill/main';
 
 const CONFIG_PATH = join(homedir(), '.config', 'dalle', 'config.json');
 const DEFAULT_CONFIG = {
@@ -115,6 +119,7 @@ function askChoice(list) {
 
 async function runDailyCheck(config) {
   const today = new Date().toISOString().slice(0, 10);
+  await checkLatestVersion(config);
   if (config.lastChecked === today) return config;
 
   let fetched;
@@ -151,6 +156,52 @@ async function runDailyCheck(config) {
 
   writeConfig(config);
   return config;
+}
+
+// ── Version check ────────────────────────────────────────────────────────────
+
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const options = {
+      hostname: parsed.hostname,
+      path: parsed.pathname + parsed.search,
+      method: 'GET',
+      headers: { 'User-Agent': `openai-image-skill/${VERSION}` },
+    };
+    const req = httpsRequest(options, (res) => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
+        catch { reject(new Error('Invalid JSON')); }
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+async function checkLatestVersion(config) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (config.versionChecked === today) return;
+
+  let latestTag;
+  try {
+    const data = await fetchJson(RELEASES_API);
+    latestTag = data.tag_name?.replace(/^v/, '');
+  } catch {
+    return;
+  }
+
+  config.versionChecked = today;
+  config.latestVersion = latestTag;
+  writeConfig(config);
+
+  if (latestTag && latestTag !== VERSION) {
+    console.log(`\nUpdate available: v${VERSION} → v${latestTag}`);
+    console.log('Run: generate-image.mjs update\n');
+  }
 }
 
 // ── Commands ─────────────────────────────────────────────────────────────────
@@ -209,6 +260,55 @@ async function cmdSetDefault(model, config) {
   console.log(`Default model set to: ${model}`);
 }
 
+async function cmdUpdate() {
+  let release;
+  try {
+    release = await fetchJson(RELEASES_API);
+  } catch (err) {
+    console.error(`Could not reach GitHub: ${err.message}`);
+    process.exit(1);
+  }
+
+  const remoteVersion = release.tag_name?.replace(/^v/, '');
+  if (!remoteVersion) {
+    console.error('Could not determine latest version.');
+    process.exit(1);
+  }
+
+  if (remoteVersion === VERSION) {
+    console.log(`Already up to date (v${VERSION}).`);
+    return;
+  }
+
+  console.log(`Update available: v${VERSION} → v${remoteVersion}`);
+  console.log(`Release notes: ${release.html_url}`);
+
+  if (process.stdin.isTTY) {
+    const doUpdate = await askYesNo('Update now?');
+    if (!doUpdate) return;
+  }
+
+  const scriptPath = resolve(process.argv[1]);
+  const tmpPath = `${scriptPath}.tmp`;
+  const skillMdPath = join(homedir(), '.claude', 'skills', 'openai-image-skill', 'SKILL.md');
+
+  console.log('Downloading update…');
+  const scriptBuffer = await downloadToBuffer(`${REPO_RAW}/generate-image.mjs`);
+  writeFileSync(tmpPath, scriptBuffer);
+  renameSync(tmpPath, scriptPath);
+  chmodSync(scriptPath, 0o755);
+
+  try {
+    const skillBuffer = await downloadToBuffer(`${REPO_RAW}/SKILL.md`);
+    writeFileSync(skillMdPath, skillBuffer);
+    console.log('  ✓ SKILL.md updated');
+  } catch {
+    console.warn('  ⚠  Could not update SKILL.md (skill may not be installed at default path)');
+  }
+
+  console.log(`\nUpdated to v${remoteVersion}. Restart Claude Code to reload skill.`);
+}
+
 // ── CLI parser ────────────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
@@ -230,6 +330,7 @@ function parseArgs(argv) {
   const [first, second] = positional;
   if (first === 'list-models') return { command: 'list-models' };
   if (first === 'set-default') return { command: 'set-default', model: second };
+  if (first === 'update') return { command: 'update' };
   if (first) return { command: 'generate', prompt: first, ...flags };
   return { command: 'help' };
 }
@@ -245,12 +346,14 @@ async function main() {
       '  generate-image.mjs "prompt" [--model=X] [--size=X] [--output=X]',
       '  generate-image.mjs list-models',
       '  generate-image.mjs set-default <model-id>',
+      '  generate-image.mjs update',
     ].join('\n'));
     return;
   }
 
-  checkApiKey();
   const config = readConfig();
+
+  if (parsed.command !== 'update') checkApiKey();
 
   switch (parsed.command) {
     case 'list-models':
@@ -265,6 +368,9 @@ async function main() {
       break;
     case 'generate':
       await cmdGenerate(parsed.prompt, parsed, config);
+      break;
+    case 'update':
+      await cmdUpdate();
       break;
   }
 }
