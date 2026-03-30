@@ -23,8 +23,12 @@ if [ "$HAS_LOCAL_BIN" = true ]; then
 fi
 echo "  3) Custom path"
 echo ""
-printf "Press Enter for default, or choose (1%s/3): " "$([ "$HAS_LOCAL_BIN" = true ] && echo '/2')"
-read -r CHOICE
+if [[ "$1" == "--default" || "$1" == "--yes" ]]; then
+  CHOICE="1"
+else
+  printf "Press Enter for default, or choose (1%s/3): " "$([ "$HAS_LOCAL_BIN" = true ] && echo '/2')"
+  read -r CHOICE
+fi
 
 case "$CHOICE" in
   2)
@@ -89,6 +93,8 @@ else
 fi
 
 echo ""
-echo "Done! Try it:"
-echo "  $INVOKE_CMD \"a cat on the moon\""
+echo "Done! Use it in Claude Code:"
+echo "  /openai-image-skill a cat on the moon"
+echo ""
+echo "  (or just ask Claude to generate an image)"
 echo ""

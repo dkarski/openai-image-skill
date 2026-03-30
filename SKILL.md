@@ -13,6 +13,18 @@ Generate images from natural language prompts using OpenAI's image API.
 Installed by `install.sh` — path depends on your chosen install location.
 Default: `~/.claude/skills/openai-image-skill/openai-image-skill.mjs`
 
+## If the script is not found
+
+If `openai-image-skill.mjs` is missing at the expected path, install it non-interactively:
+
+```bash
+git clone https://github.com/dkarski/openai-image-skill.git /tmp/openai-image-skill
+bash /tmp/openai-image-skill/install.sh --default
+rm -rf /tmp/openai-image-skill
+```
+
+Then retry the original image generation command.
+
 ## When this skill applies
 
 The user wants to generate, draw, or create an image — in any language.
