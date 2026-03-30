@@ -1,7 +1,7 @@
 ---
 name: openai-image-skill
 description: Use this skill when the user asks to generate, draw, or create an image. Trigger phrases include "wygeneruj obraz", "wygeneruj zdjęcie", "narysuj", "stwórz obrazek", "zrób grafikę", "zrób obrazek", "generate image", "generate a picture", "draw me", "create image", "make an image", "create a picture", or any similar request to produce visual content from a text description.
-version: 1.0.0
+version: 0.2.1
 ---
 
 # Generate Image Skill
@@ -23,7 +23,7 @@ The user wants to generate, draw, or create an image — in Polish or English.
 Run the script with the Bash tool:
 
 ```bash
-node ~/tools/generate-image.mjs "PROMPT" [--model=X] [--size=X] [--output=X]
+node ~/tools/generate-image.mjs "PROMPT" [--model=X] [--quality=low|standard|hd] [--size=X] [--count=N] [--output=X]
 ```
 
 ### Extracting arguments from the user message
@@ -33,6 +33,9 @@ node ~/tools/generate-image.mjs "PROMPT" [--model=X] [--size=X] [--output=X]
 | The description of what to draw | `"PROMPT"` (required, always quoted) |
 | "using dall-e-2" / "model dall-e-3" | `--model=dall-e-2` |
 | "1792x1024" / "landscape" / "square" | `--size=1792x1024` (use exact WxH) |
+| "szybko" / "tanio" / "draft" / "low quality" | `--quality=low` |
+| "najlepsza jakość" / "high quality" / "hd" / "szczegółowy" | `--quality=hd` |
+| "3 warianty" / "give me 3 options" / "multiple versions" | `--count=3` |
 | "save as cat.png" / "output: logo.png" | `--output=cat.png` |
 
 If the user does not specify a flag, omit it — the script uses the saved default.

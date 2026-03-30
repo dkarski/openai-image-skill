@@ -5,7 +5,7 @@ import { request as httpsRequest, get as httpsGet } from 'https';
 import { homedir } from 'os';
 import { join, resolve, dirname } from 'path';
 
-const VERSION = '0.2.1';
+const VERSION = '0.3.0';
 const RELEASES_API = 'https://api.github.com/repos/dkarski/openai-image-skill/releases/latest';
 const REPO_RAW = 'https://raw.githubusercontent.com/dkarski/openai-image-skill/main';
 
@@ -205,10 +205,27 @@ async function checkLatestVersion(config) {
 
 // ── Commands ─────────────────────────────────────────────────────────────────
 
-function defaultFilename() {
+function defaultFilename(suffix = '') {
   const d = new Date();
   const pad = n => String(n).padStart(2, '0');
-  return `image_${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.png`;
+  const folder = join(homedir(), 'Pictures', 'ai-generated',
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}`);
+  const stem = `image_${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  return join(folder, `${stem}${suffix}.png`);
+}
+
+function resolveQuality(model, userQuality) {
+  if (!userQuality) return undefined;
+  const isGptImage = model.startsWith('gpt-image');
+  if (isGptImage) {
+    // gpt-image-1 uses: low | medium | high
+    return userQuality === 'hd' ? 'high' : userQuality === 'standard' ? 'medium' : 'low';
+  }
+  if (model === 'dall-e-3') {
+    // dall-e-3 uses: standard | hd
+    return userQuality === 'low' ? 'standard' : userQuality;
+  }
+  return undefined; // dall-e-2 ignores quality
 }
 
 async function cmdGenerate(prompt, opts, config) {
@@ -216,27 +233,37 @@ async function cmdGenerate(prompt, opts, config) {
 
   const model = opts.model ?? config.defaultModel;
   const size = opts.size ?? '1024x1024';
-  const outputPath = resolve(opts.output ?? defaultFilename());
-
-  console.log(`Generating with ${model} (${size})…`);
-
+  const count = Math.max(1, Math.min(parseInt(opts.count, 10) || 1, 4));
+  const quality = resolveQuality(model, opts.quality);
   const isGptImage = model.startsWith('gpt-image');
-  const body = { model, prompt, n: 1, size };
-  if (!isGptImage) body.response_format = 'url';
 
-  const result = await apiRequest('POST', '/v1/images/generations', body);
+  const qualityLabel = opts.quality ? `, quality=${opts.quality}` : '';
+  console.log(`Generating with ${model} (${size}${qualityLabel})…`);
 
-  let buffer;
-  if (result.data[0].b64_json) {
-    buffer = Buffer.from(result.data[0].b64_json, 'base64');
-  } else {
-    buffer = await downloadToBuffer(result.data[0].url);
+  for (let i = 0; i < count; i++) {
+    const suffix = count > 1 ? `_${i + 1}` : '';
+    const outputPath = opts.output
+      ? resolve(count > 1 ? opts.output.replace(/\.png$/i, `${suffix}.png`) : opts.output)
+      : resolve(defaultFilename(suffix));
+
+    const body = { model, prompt, n: 1, size };
+    if (!isGptImage) body.response_format = 'url';
+    if (quality) body.quality = quality;
+
+    const result = await apiRequest('POST', '/v1/images/generations', body);
+
+    let buffer;
+    if (result.data[0].b64_json) {
+      buffer = Buffer.from(result.data[0].b64_json, 'base64');
+    } else {
+      buffer = await downloadToBuffer(result.data[0].url);
+    }
+
+    mkdirSync(dirname(outputPath), { recursive: true });
+    writeFileSync(outputPath, buffer);
+    console.log(`Saved:  ${outputPath}`);
   }
 
-  mkdirSync(dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, buffer);
-
-  console.log(`Saved:  ${outputPath}`);
   console.log(`Model:  ${model}`);
   console.log(`Size:   ${size}`);
 }
@@ -344,7 +371,7 @@ async function main() {
   if (parsed.command === 'help') {
     console.log([
       'Usage:',
-      '  generate-image.mjs "prompt" [--model=X] [--size=X] [--output=X]',
+      '  generate-image.mjs "prompt" [--model=X] [--quality=low|standard|hd] [--size=X] [--count=N] [--output=X]',
       '  generate-image.mjs list-models',
       '  generate-image.mjs set-default <model-id>',
       '  generate-image.mjs update',
