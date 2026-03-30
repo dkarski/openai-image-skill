@@ -13,7 +13,7 @@ A [Claude Code](https://claude.ai/code) skill that lets you generate images via 
 - **Quality control** — `--quality=low|standard|hd` to balance cost vs. quality
 - **Multiple variants** — `--count=N` to generate several options at once
 - **Any language** — triggers on image requests in any language
-- **Self-updating** — `generate-image.mjs update` keeps you on the latest version
+- **Self-updating** — `openai-image-skill.mjs update` keeps you on the latest version
 
 ## Requirements
 
@@ -29,9 +29,17 @@ cd openai-image-skill
 bash install.sh
 ```
 
-This installs:
-- `SKILL.md` → `~/.claude/skills/openai-image-skill/SKILL.md`
-- `generate-image.mjs` → `~/tools/generate-image.mjs`
+The installer asks where to put the script:
+
+```
+Where should openai-image-skill.mjs be installed?
+
+  1) ~/.claude/skills/openai-image-skill/  ← default (co-located with skill)
+  2) ~/.local/bin/                          ← advanced (in PATH, shorter CLI invocation)
+  3) Custom path
+```
+
+**Default** installs everything to `~/.claude/skills/openai-image-skill/` — the same directory Claude Code uses for skills, no PATH setup needed.
 
 Then set your API key (if not already set):
 
@@ -56,24 +64,29 @@ Just talk to Claude naturally — the skill triggers automatically:
 ### Direct CLI usage
 
 ```bash
-# Basic
-node ~/tools/generate-image.mjs "a cat on the moon"
+# Basic (path depends on your install location)
+node ~/.claude/skills/openai-image-skill/openai-image-skill.mjs "a cat on the moon"
 
 # With options
-node ~/tools/generate-image.mjs "photo" --model=gpt-image-1 --quality=hd --size=1792x1024
+node ~/.claude/skills/openai-image-skill/openai-image-skill.mjs "photo" --model=gpt-image-1 --quality=hd --size=1792x1024
 
 # Multiple variants
-node ~/tools/generate-image.mjs "logo concept" --count=3
+node ~/.claude/skills/openai-image-skill/openai-image-skill.mjs "logo concept" --count=3
 
 # List available models
-node ~/tools/generate-image.mjs list-models
+node ~/.claude/skills/openai-image-skill/openai-image-skill.mjs list-models
 
 # Change default model
-node ~/tools/generate-image.mjs set-default gpt-image-1
+node ~/.claude/skills/openai-image-skill/openai-image-skill.mjs set-default gpt-image-1
 
 # Update to latest version
-node ~/tools/generate-image.mjs update
+node ~/.claude/skills/openai-image-skill/openai-image-skill.mjs update
+
+# Check version
+node ~/.claude/skills/openai-image-skill/openai-image-skill.mjs --version
 ```
+
+> If you installed to `~/.local/bin/` (option 2), you can use `openai-image-skill.mjs` directly without the path prefix.
 
 ### Options
 
@@ -122,10 +135,11 @@ Use `--output=filename.png` to save to a specific path.
 ## Updating
 
 ```bash
-node ~/tools/generate-image.mjs update
+node ~/.claude/skills/openai-image-skill/openai-image-skill.mjs update
 ```
 
 Checks GitHub Releases and updates both the script and SKILL.md in one step.
+Your install location is remembered — the update goes to the same place.
 
 ## Configuration
 
@@ -135,7 +149,9 @@ Config is stored at `~/.config/dalle/config.json`:
 {
   "defaultModel": "gpt-image-1",
   "knownModels": ["dall-e-2", "dall-e-3", "gpt-image-1", "gpt-image-1.5"],
-  "lastChecked": "2026-03-30"
+  "lastChecked": "2026-03-30",
+  "scriptDir": "~/.claude/skills/openai-image-skill",
+  "invokeCmd": "node ~/.claude/skills/openai-image-skill/openai-image-skill.mjs"
 }
 ```
 

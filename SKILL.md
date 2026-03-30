@@ -1,7 +1,7 @@
 ---
 name: openai-image-skill
 description: Use this skill when the user asks to generate, draw, or create an image — in any language.
-version: 0.3.2
+version: 0.4.0
 ---
 
 # Generate Image Skill
@@ -10,9 +10,8 @@ Generate images from natural language prompts using OpenAI's image API.
 
 ## Script location
 
-```
-~/tools/generate-image.mjs
-```
+Installed by `install.sh` — path depends on your chosen install location.
+Default: `~/.claude/skills/openai-image-skill/openai-image-skill.mjs`
 
 ## When this skill applies
 
@@ -23,7 +22,7 @@ The user wants to generate, draw, or create an image — in any language.
 Run the script with the Bash tool:
 
 ```bash
-node ~/tools/generate-image.mjs "PROMPT" [--model=X] [--quality=low|standard|hd] [--size=X] [--count=N] [--output=X]
+{{INVOKE_CMD}} "PROMPT" [--model=X] [--quality=low|standard|hd] [--size=X] [--count=N] [--output=X]
 ```
 
 ### Extracting arguments from the user message
@@ -49,9 +48,9 @@ If the user does not specify a flag, omit it — the script uses the saved defau
 ## Other commands
 
 ```bash
-node ~/tools/generate-image.mjs list-models      # show available models
-node ~/tools/generate-image.mjs set-default dall-e-3
-node ~/tools/generate-image.mjs update           # self-update to latest release
+{{INVOKE_CMD}} list-models
+{{INVOKE_CMD}} set-default dall-e-3
+{{INVOKE_CMD}} update
 ```
 
 ## What to report back
@@ -67,7 +66,7 @@ If the script prints an error, show the error to the user and suggest the fix
 ## Example invocations
 
 ```bash
-node ~/tools/generate-image.mjs "a futuristic city at night"
-node ~/tools/generate-image.mjs "mountain landscape at sunset" --quality=hd
-node ~/tools/generate-image.mjs "logo: minimalist fox" --model=dall-e-3 --count=3 --output=logo.png
+{{INVOKE_CMD}} "a futuristic city at night"
+{{INVOKE_CMD}} "mountain landscape at sunset" --quality=hd
+{{INVOKE_CMD}} "logo: minimalist fox" --model=dall-e-3 --count=3 --output=logo.png
 ```

@@ -5,9 +5,10 @@ import { request as httpsRequest, get as httpsGet } from 'https';
 import { homedir } from 'os';
 import { join, resolve, dirname } from 'path';
 
-const VERSION = '0.3.2';
+const VERSION = '0.4.0';
 const RELEASES_API = 'https://api.github.com/repos/dkarski/openai-image-skill/releases/latest';
 const REPO_RAW = 'https://raw.githubusercontent.com/dkarski/openai-image-skill/main';
+const SCRIPT_FILENAME = 'openai-image-skill.mjs';
 
 const CONFIG_PATH = join(homedir(), '.config', 'dalle', 'config.json');
 const DEFAULT_CONFIG = {
@@ -316,19 +317,23 @@ async function cmdUpdate() {
     if (!doUpdate) return;
   }
 
-  const scriptPath = resolve(process.argv[1]);
-  const tmpPath = `${scriptPath}.tmp`;
+  const config2 = readConfig();
+  const scriptDir = config2.scriptDir ?? join(homedir(), '.claude', 'skills', 'openai-image-skill');
+  const scriptDest = join(scriptDir, SCRIPT_FILENAME);
+  const tmpPath = `${scriptDest}.tmp`;
   const skillMdPath = join(homedir(), '.claude', 'skills', 'openai-image-skill', 'SKILL.md');
 
   console.log('Downloading update…');
-  const scriptBuffer = await downloadToBuffer(`${REPO_RAW}/generate-image.mjs`);
+  const scriptBuffer = await downloadToBuffer(`${REPO_RAW}/${SCRIPT_FILENAME}`);
   writeFileSync(tmpPath, scriptBuffer);
-  renameSync(tmpPath, scriptPath);
-  chmodSync(scriptPath, 0o755);
+  renameSync(tmpPath, scriptDest);
+  chmodSync(scriptDest, 0o755);
+  console.log(`  ✓ Script updated (${scriptDest})`);
 
   try {
-    const skillBuffer = await downloadToBuffer(`${REPO_RAW}/SKILL.md`);
-    writeFileSync(skillMdPath, skillBuffer);
+    const invokeCmd = config2.invokeCmd ?? `node ${scriptDir}/${SCRIPT_FILENAME}`;
+    const rawSkill = (await downloadToBuffer(`${REPO_RAW}/SKILL.md`)).toString();
+    writeFileSync(skillMdPath, rawSkill.replace(/\{\{INVOKE_CMD\}\}/g, invokeCmd));
     console.log('  ✓ SKILL.md updated');
   } catch {
     console.warn('  ⚠  Could not update SKILL.md (skill may not be installed at default path)');
