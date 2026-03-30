@@ -12,7 +12,7 @@ A [Claude Code](https://claude.ai/code) skill that lets you generate images via 
 - **All OpenAI image models** — DALL-E 2/3, `gpt-image-1`, `gpt-image-1.5`, auto-detects new models daily
 - **Quality control** — `--quality=low|standard|hd` to balance cost vs. quality
 - **Multiple variants** — `--count=N` to generate several options at once
-- **Bilingual** — triggers on English and Polish phrases natively
+- **Any language** — triggers on image requests in any language
 - **Self-updating** — `generate-image.mjs update` keeps you on the latest version
 
 ## Requirements
@@ -46,8 +46,8 @@ Just talk to Claude naturally — the skill triggers automatically:
 
 > "generate an image of a cat on the moon"
 > "draw a futuristic city at sunset, landscape"
-> "wygeneruj obrazek górskiego krajobrazu"
-> "narysuj logo: minimalist fox"
+> "créer une image d'une forêt enchantée"
+> "erstelle ein Logo: minimalist fox"
 
 ### Direct CLI usage
 
@@ -85,9 +85,9 @@ node ~/tools/generate-image.mjs update
 
 | Keyword | Size |
 |---------|------|
-| square / kwadrat | `1024x1024` |
-| landscape / poziomy | `1792x1024` |
-| portrait / pionowy | `1024x1792` |
+| square | `1024x1024` |
+| landscape | `1792x1024` |
+| portrait | `1024x1792` |
 
 ### Quality presets
 

@@ -5,7 +5,7 @@ import { request as httpsRequest, get as httpsGet } from 'https';
 import { homedir } from 'os';
 import { join, resolve, dirname } from 'path';
 
-const VERSION = '0.3.1';
+const VERSION = '0.3.2';
 const RELEASES_API = 'https://api.github.com/repos/dkarski/openai-image-skill/releases/latest';
 const REPO_RAW = 'https://raw.githubusercontent.com/dkarski/openai-image-skill/main';
 
@@ -359,6 +359,7 @@ function parseArgs(argv) {
   if (first === 'list-models') return { command: 'list-models' };
   if (first === 'set-default') return { command: 'set-default', model: second };
   if (first === 'update') return { command: 'update' };
+  if (first === '--version' || flags.version) return { command: 'version' };
   if (first) return { command: 'generate', prompt: first, ...flags };
   return { command: 'help' };
 }
@@ -375,7 +376,13 @@ async function main() {
       '  generate-image.mjs list-models',
       '  generate-image.mjs set-default <model-id>',
       '  generate-image.mjs update',
+      '  generate-image.mjs --version',
     ].join('\n'));
+    return;
+  }
+
+  if (parsed.command === 'version') {
+    console.log(`v${VERSION}`);
     return;
   }
 

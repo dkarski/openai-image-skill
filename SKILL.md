@@ -1,7 +1,7 @@
 ---
 name: openai-image-skill
 description: Use this skill when the user asks to generate, draw, or create an image — in any language.
-version: 0.3.1
+version: 0.3.2
 ---
 
 # Generate Image Skill
@@ -68,6 +68,6 @@ If the script prints an error, show the error to the user and suggest the fix
 
 ```bash
 node ~/tools/generate-image.mjs "a futuristic city at night"
-node ~/tools/generate-image.mjs "górski krajobraz o zachodzie słońca" --quality=hd
+node ~/tools/generate-image.mjs "mountain landscape at sunset" --quality=hd
 node ~/tools/generate-image.mjs "logo: minimalist fox" --model=dall-e-3 --count=3 --output=logo.png
 ```
