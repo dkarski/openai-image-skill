@@ -5,7 +5,7 @@ import { request as httpsRequest, get as httpsGet } from 'https';
 import { homedir } from 'os';
 import { join, resolve, dirname } from 'path';
 
-const VERSION = '0.3.0';
+const VERSION = '0.3.1';
 const RELEASES_API = 'https://api.github.com/repos/dkarski/openai-image-skill/releases/latest';
 const REPO_RAW = 'https://raw.githubusercontent.com/dkarski/openai-image-skill/main';
 
