@@ -119,7 +119,6 @@ function askChoice(list) {
 
 async function runDailyCheck(config) {
   const today = new Date().toISOString().slice(0, 10);
-  await checkLatestVersion(config);
   if (config.lastChecked === today) return config;
 
   let fetched;
@@ -355,7 +354,10 @@ async function main() {
 
   const config = readConfig();
 
-  if (parsed.command !== 'update') checkApiKey();
+  if (parsed.command !== 'update') {
+    checkApiKey();
+    await checkLatestVersion(config);
+  }
 
   switch (parsed.command) {
     case 'list-models':
